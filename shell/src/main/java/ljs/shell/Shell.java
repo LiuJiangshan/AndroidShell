@@ -83,7 +83,7 @@ public class Shell
         {
             try
             {
-                String line = null;
+                String line;
                 synchronized (Shell.this)
                 {
                     Shell.this.wait();
@@ -167,6 +167,8 @@ public class Shell
         new Thread(errorThread, "ljs_shell_error_read_thread").start();
     }
 
+    static Shell androidShell;
+
     /**
      * 获取Android终端命令行
      *
@@ -174,15 +176,9 @@ public class Shell
      */
     public static Shell getAndroidShell(boolean isRoot) throws IOException
     {
-        return new Shell(isRoot ? "su\n" : "sh\n");
-    }
-
-    /**
-     * 获取linux终端命令行
-     */
-    public static Shell getLinuxShell() throws IOException
-    {
-        return new Shell("sh\n");
+        if (androidShell == null)
+            androidShell = new Shell(isRoot ? "su\n" : "sh\n");
+        return androidShell;
     }
 
     /**
@@ -218,6 +214,10 @@ public class Shell
     {
         if (closed)
             throw new Exception("该终端已被关闭");
+        if (reading)
+            throw new Exception("该终端正在读取");
+        if (running)
+            throw new Exception("该终端正在执行");
         this.command = command;
         synchronized (Shell.this)
         {
